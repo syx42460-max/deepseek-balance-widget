@@ -226,3 +226,7 @@ DeepSeekWidget-Setup.exe --update --silent      :: 覆盖更新到已安装的�
 - **窗口找不到了**：`python main.py --reset-position` 回到右下角。
 - **不想让它开机启动**：右键菜单取消勾选「开机自启」，或删除注册表
   `HKCU\...\Run` 下的 `DeepSeekBalanceWidget`。
+
+## 许可证
+
+本项目采用 MIT 许可证，你可以自由使用、修改、分发，详见 [LICENSE](LICENSE)。
