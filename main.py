@@ -729,6 +729,12 @@ def main(argv=None) -> int:
     if not config.api_key:
         print("提示：尚未配置 API key，可在挂件右键菜单 → 设置 里填写。")
 
+    # 清理被强杀留下的 PyInstaller 临时解包目录（只删空目录和三天前的残留）
+    removed = app_config.sweep_temp_extraction()
+    if removed:
+        app_config.log_note(f"清理了 {removed} 个残留的临时解包目录")
+        print(f"已清理 {removed} 个残留的临时解包目录。")
+
     enable_dpi_awareness()
     guard = single_instance_guard()
     if guard is None:

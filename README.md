@@ -193,6 +193,24 @@ DeepSeekWidget-Setup.exe --update --silent      :: 覆盖更新到已安装的�
 版本号从 exe 的版本资源里读（`version_app.txt` / `version_setup.txt`），所以哪怕是直接
 拷贝的绿色版也能识别出版本。
 
+「占用空间」只统计安装程序自己放进去的文件（主程序 + 卸载器 + 图标）。就算把挂件装进
+`D:\Program` 这类和别的软件混用的目录，「设置 → 应用」里显示的也是真实体积（约 24 MB），
+不会把同目录下别人的软件算进来。
+
+## 磁盘占用
+
+挂件自身的占用是固定的，不会随时间增长：
+
+| 位置 | 大小 | 说明 |
+| --- | --- | --- |
+| 程序目录 | 约 24 MB | 主程序 12 MB + 卸载器 12 MB |
+| `%APPDATA%\DeepSeekBalanceWidget` | 几十 KB | `config.json` / `ledger.json` / `pricing.json` |
+| `%TEMP%\_MEI*` | 0 字节 | PyInstaller 解包目录，正常退出会自动删除 |
+
+唯一会"长大"的是账本（每次对话一条记录，约 200 字节，一年也就几十 KB）和日志
+（只记录异常，超过 256 KB 自动轮转）。被强杀（任务管理器结束进程、崩溃）时
+`%TEMP%` 可能留下空的 `_MEI*` 目录，**挂件每次启动都会自动清理空目录和三天前的残留**。
+
 安装包里的三个文件是这样组装的（`build_installer.bat` 已经全部串好）：
 `DeepSeekBalanceWidget.exe`（主程序）+ `Uninstall.exe`（精简卸载器，不含主程序本体）
 → 一起塞进 `DeepSeekWidget-Setup.exe`，安装时释放到目标目录。

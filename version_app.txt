@@ -1,7 +1,7 @@
 VSVersionInfo(
   ffi=FixedFileInfo(
-    filevers=(1, 4, 0, 0),
-    prodvers=(1, 4, 0, 0),
+    filevers=(1, 4, 1, 0),
+    prodvers=(1, 4, 1, 0),
     mask=0x3f,
     flags=0x0,
     OS=0x40004,
@@ -14,11 +14,11 @@ VSVersionInfo(
       StringTable('080404B0', [
         StringStruct('CompanyName', 'DeepSeek Balance Widget'),
         StringStruct('FileDescription', 'DeepSeek 余额挂件'),
-        StringStruct('FileVersion', '1.4.0'),
+        StringStruct('FileVersion', '1.4.1'),
         StringStruct('InternalName', 'DeepSeekBalanceWidget'),
         StringStruct('OriginalFilename', 'DeepSeekBalanceWidget.exe'),
         StringStruct('ProductName', 'DeepSeek 余额挂件'),
-        StringStruct('ProductVersion', '1.4.0'),
+        StringStruct('ProductVersion', '1.4.1'),
       ])
     ]),
     VarFileInfo([VarStruct('Translation', [2052, 1200])])

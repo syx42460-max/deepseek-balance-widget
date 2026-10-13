@@ -26,11 +26,73 @@ def log_exception(context: str, error: BaseException) -> None:
         import traceback
 
         CONFIG_DIR.mkdir(parents=True, exist_ok=True)
+        _rotate_log()
         with LOG_PATH.open("a", encoding="utf-8") as handle:
             handle.write(f"[{datetime.now():%Y-%m-%d %H:%M:%S}] {context}\n")
             traceback.print_exception(type(error), error, error.__traceback__, file=handle)
     except Exception:
         pass
+
+
+LOG_MAX_BYTES = 256 * 1024      # 日志超过 256 KB 就轮转一次，避免无限增长
+
+
+def _rotate_log() -> None:
+    try:
+        if LOG_PATH.exists() and LOG_PATH.stat().st_size > LOG_MAX_BYTES:
+            LOG_PATH.replace(LOG_PATH.with_suffix(".log.old"))
+    except OSError:
+        pass
+
+
+def log_note(text: str) -> None:
+    """记一条普通日志（同样受体积上限保护）。"""
+    try:
+        CONFIG_DIR.mkdir(parents=True, exist_ok=True)
+        _rotate_log()
+        with LOG_PATH.open("a", encoding="utf-8") as handle:
+            handle.write(f"[{datetime.now():%Y-%m-%d %H:%M:%S}] {text}\n")
+    except OSError:
+        pass
+
+
+def sweep_temp_extraction(root: Path | None = None, max_age_days: int = 3) -> int:
+    """清理 PyInstaller 单文件模式残留的 _MEI* 解包目录，返回清理个数。
+
+    正常退出时 PyInstaller 的启动器会自己删掉这些目录；但如果进程被强杀
+    （任务管理器结束、崩溃、关机），就会残留在 %TEMP% 里越攒越多。
+    这里只处理两种情况，确保不会碰到正在运行的程序：
+      - 空目录：直接删（最常见的残留形态）
+      - 修改时间超过 max_age_days 天的目录：整目录删
+    当前进程自己的解包目录永远跳过。
+    """
+    import shutil
+    import tempfile
+    import time
+
+    base = Path(root) if root else Path(tempfile.gettempdir())
+    current = Path(sys._MEIPASS) if getattr(sys, "frozen", False) else None
+    removed = 0
+    try:
+        candidates = list(base.glob("_MEI*"))
+    except OSError:
+        return 0
+    for item in candidates:
+        try:
+            if not item.is_dir():
+                continue
+            if current is not None and item == current:
+                continue
+            if not any(item.iterdir()):
+                item.rmdir()
+                removed += 1
+                continue
+            if time.time() - item.stat().st_mtime > max_age_days * 86400:
+                shutil.rmtree(item, ignore_errors=True)
+                removed += 1
+        except OSError:
+            continue
+    return removed
 
 DEFAULTS: dict[str, Any] = {
     "api_key": "",            # 明文留空，实际存 api_key_blob（DPAPI 加密后 base64）

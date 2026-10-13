@@ -29,7 +29,7 @@ from tkinter import filedialog
 
 APP_NAME = "DeepSeek 余额挂件"
 APP_ID = "DeepSeekBalanceWidget"
-VERSION = "1.4.0"
+VERSION = "1.4.1"
 EXE_NAME = "DeepSeekBalanceWidget.exe"
 UNINSTALLER_NAME = "Uninstall.exe"
 PUBLISHER = "自建"
@@ -235,10 +235,30 @@ def stop_running(install_dir: Path) -> bool:
 
 
 def directory_size_kb(path: Path) -> int:
+    """【已废弃】统计整个目录：用户如果把挂件装进一个公共目录（比如 D:\\Program），
+    会把同目录下别人的软件也算进"本程序占用"，导致「设置 → 应用」里显示成几个 GB。
+    保留这个函数只为兼容旧调用，新代码请用 installed_size_kb()。"""
     total = 0
     for item in path.rglob("*"):
         if item.is_file():
             total += item.stat().st_size
+    return max(1, total // 1024)
+
+
+# 安装程序自己放进去的文件（占用统计只看这些）
+MANAGED_FILES = (EXE_NAME, UNINSTALLER_NAME, "app.ico")
+
+
+def installed_size_kb(install_dir: Path) -> int:
+    """只统计本程序自己的文件，避免把同目录里其它软件算进来。"""
+    total = 0
+    for name in MANAGED_FILES:
+        candidate = Path(install_dir) / name
+        try:
+            if candidate.is_file():
+                total += candidate.stat().st_size
+        except OSError:
+            continue
     return max(1, total // 1024)
 
 
@@ -383,7 +403,7 @@ def install(install_dir: Path, desktop_shortcut: bool, autostart: bool,
     set_autostart(target, autostart)
 
     log("注册到「应用和功能」…")
-    write_uninstall_entry(install_dir, directory_size_kb(install_dir))
+    write_uninstall_entry(install_dir, installed_size_kb(install_dir))
 
     if run_after or (restart_if_running and was_running):
         log("启动挂件…")
